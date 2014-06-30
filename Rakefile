@@ -15,7 +15,7 @@ end
 
 safe_require 'rspec/core/rake_task' do
   desc 'Run tests'
-  RSpec::Core::RakeTask.new('test') do |t|
+  RSpec::Core::RakeTask.new('spec') do |t|
     t.pattern = 'spec/*_spec.rb'
   end
 end
@@ -38,12 +38,30 @@ task :rackup do
 end
 
 desc 'Package Sinagios using fpm'
-task :package do
+task :package, :type do |t, args|
   require 'fileutils'
   require 'tempfile'
   require 'fpm' # just to make sure we have it before proceeding
 
   begin
+
+    # Create the RPM with fpm
+    # TODO: Use fpm as a library
+    PKGNAME = 'sinagios'
+    PKGVERSION = '1.0.0'
+    PKGMAINT = 'ohookins@gmail.com'
+    PKGTYPE = args[:type].nil? ? 'rpm' : args[:type]
+    PKGARCH = PKGTYPE == 'rpm' ? 'noarch' : 'all'
+    if  PKGTYPE == 'rpm'
+      PKGDEPENDS =  ['ruby', 'nagios', 'rubygem-rack', 'rubygem-json', 'rubygem-thin', 'rubygem-sinatra']
+    elsif PKGTYPE == 'deb'
+      PKGDEPENDS =  ['ruby', 'nagios', 'ruby-rack', 'ruby-json', 'thin', 'ruby-sinatra']
+    end
+    PKGSOURCE = 'dir'
+    PKGPRESCRIPT = "#{PKGTYPE}files/sinagios.preinstall"
+    PKGPOSTSCRIPT = "#{PKGTYPE}files/sinagios.postinstall"
+    PKGCONFIGS = ['/etc/sinagios/config.ru', '/etc/sinagios/sinagios.conf']
+
     # Create a tempdir and copy things into place for fpm.
     # The tempdir manipulation is a bit ugly, but done for compatibility reasons
     t = Tempfile.new('w')
@@ -58,27 +76,13 @@ task :package do
     FileUtils.mkdir_p("#{dir}/etc/rc.d/init.d/")
     FileUtils.mkdir_p("#{dir}/var/log/sinagios/")
     FileUtils.cp_r(['sinagios.rb', 'lib'], "#{dir}/usr/lib/sinagios/")
-    FileUtils.cp_r(['rpmfiles/config.ru', 'rpmfiles/sinagios.conf'], "#{dir}/etc/sinagios/")
-    FileUtils.cp_r('rpmfiles/sinagios.logrotate', "#{dir}/etc/logrotate.d/sinagios")
-    FileUtils.cp_r('rpmfiles/sinagios.init', "#{dir}/etc/rc.d/init.d/sinagios")
+    FileUtils.cp_r(["#{PKGTYPE}files/config.ru", "#{PKGTYPE}files/sinagios.conf"], "#{dir}/etc/sinagios/")
+    FileUtils.cp_r("#{PKGTYPE}files/sinagios.logrotate", "#{dir}/etc/logrotate.d/sinagios")
+    FileUtils.cp_r("#{PKGTYPE}files/sinagios.init", "#{dir}/etc/rc.d/init.d/sinagios")
     FileUtils.chmod(0555, "#{dir}/etc/rc.d/init.d/sinagios")
 
-    # Create the RPM with fpm
-    # TODO: Use fpm as a library
-    PKGNAME = 'sinagios'
-    PKGVERSION = '1.0.0'
-    PKGDEPENDS = ['ruby', 'nagios', 'rubygem-rack', 'rubygem-json', 'rubygem-thin', 'rubygem-sinatra']
-    PKGARCH = 'noarch'
-    PKGMAINT = 'ohookins@gmail.com'
-    PKGTYPE = 'rpm'
-    PKGSOURCE = 'dir'
-    PKGPRESCRIPT = 'rpmfiles/sinagios.preinstall'
-    PKGPOSTSCRIPT = 'rpmfiles/sinagios.postinstall'
-    PKGFILELIST = 'rpmfiles/sinagios.filelist'
-    PKGCONFIGS = ['/etc/sinagios/config.ru', '/etc/sinagios/sinagios.conf']
-
     # Actually create the package now
-    sh "fpm -n #{PKGNAME} -v #{PKGVERSION} #{PKGDEPENDS.map { |p| '-d '+p }.join(' ')} -a #{PKGARCH} -m #{PKGMAINT} -C #{dir} -t #{PKGTYPE} -s #{PKGSOURCE} --pre-install #{PKGPRESCRIPT} --post-install #{PKGPOSTSCRIPT} --inputs #{PKGFILELIST} #{PKGCONFIGS.map { |c| '--config-files '+c }.join(' ')}"
+    sh "fpm -s #{PKGSOURCE} -t #{PKGTYPE} -n #{PKGNAME} -v #{PKGVERSION} #{PKGDEPENDS.map { |p| '-d '+p }.join(' ')} -a #{PKGARCH} -m #{PKGMAINT} -C #{dir} --pre-install #{PKGPRESCRIPT} --post-install #{PKGPOSTSCRIPT} #{PKGCONFIGS.map { |c| '--config-files '+c }.join(' ')} ./"
 
   # ensure the tmpdir is cleaned up regardless
   ensure

@@ -1,0 +1,55 @@
+#!/bin/bash
+## BEGIN INIT INFO
+# Provides: sinagios
+# Default-Start: 3 4 5
+# Default-Stop: 0 1 2 3 4 6
+# Required-Start:
+## END INIT INFO
+#
+# chkconfig: 345 1 95
+# description: Sinagios is a RESTful interface to Nagios.
+
+PIDFILE=/var/run/sinagios.pid
+RC=0
+
+start() {
+    touch $PIDFILE
+    chown sinagios. $PIDFILE
+    su -u sinagios -c "/usr/bin/rackup  -I /usr/lib/sinagios -r sinagios -p 4567 -E production -D -P $PIDFILE -s thin /etc/sinagios/config.ru"
+    RC=$?
+    [ $RC -eq 0 ] && success || failure
+}
+
+stop() {
+    # rackup stupidly only exits gracefully on SIGINT
+    killproc -p $PIDFILE rackup -INT
+    RC=$?
+    rm -f $PIDFILE
+    [ $RC -eq 0 ] && success || failure
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  status)
+    status -p $PIDFILE rackup
+    ;;
+  reload|force-reload|restart)
+    stop
+    sleep 5
+    start
+    ;;
+  condrestart)
+    status >/dev/null 2>&1 || exit 0
+    restart
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|condrestart|reload|force-reload|status}"
+    ;;
+esac
+
+exit $RC

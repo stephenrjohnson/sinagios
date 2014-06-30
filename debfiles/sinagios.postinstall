@@ -1,0 +1,7 @@
+# Have to do this since FPM doesn't know how to set ownership on files
+/bin/chown -R sinagios.sinagios /var/log/sinagios
+
+# Set up init script on initial install
+if [ $1 -eq 1 ]; then
+  update-rc.d sinagios defaults
+fi

@@ -1,13 +1,23 @@
 GEM
   remote: http://rubygems.org/
   specs:
+    arr-pm (0.0.9)
+      cabin (> 0)
+    backports (2.3.0)
+    cabin (0.4.4)
+      json
+    clamp (0.6.3)
     daemons (1.1.4)
     diff-lcs (1.1.2)
     eventmachine (0.12.10)
-    fpm (0.3.11)
+    fpm (0.4.6)
+      arr-pm (~> 0.0.7)
+      backports (= 2.3.0)
+      cabin (~> 0.4.3)
+      clamp
       json
     json (1.5.3)
-    metaclass (0.0.1)
+    metaclass (0.0.4)
     mocha (0.10.0)
       metaclass (~> 0.0.1)
     rack (1.2.4)
@@ -28,6 +38,7 @@ GEM
     sinatra (1.2.7)
       rack (~> 1.1)
       tilt (>= 1.2.2, < 2.0)
+      tilt (>= 1.2.2, < 2.0)
     thin (1.2.11)
       daemons (>= 1.0.9)
       eventmachine (>= 0.12.6)
@@ -41,7 +52,7 @@ DEPENDENCIES
   daemons (= 1.1.4)
   diff-lcs (= 1.1.2)
   eventmachine (= 0.12.10)
-  fpm (= 0.3.11)
+  fpm (> 0.4.0)
   json (= 1.5.3)
   mocha (= 0.10.0)
   rack (= 1.2.4)

@@ -1,0 +1,9 @@
+if [ $1 -eq 0 ]; then
+  # Tear down service and init script if we're not upgrading
+  /etc/init.d/sinagios stop
+  update-rc.d -f sinagios remove
+
+  # Notify user of remaining data
+  echo "The sinagios user account and logs in /var/log/sinagios will need to be"
+  echo "removed manually after uninstallation of the package."
+fi
