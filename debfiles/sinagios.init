@@ -10,22 +10,15 @@
 # description: Sinagios is a RESTful interface to Nagios.
 
 PIDFILE=/var/run/sinagios.pid
-RC=0
-
 start() {
     touch $PIDFILE
     chown sinagios. $PIDFILE
-    su -u sinagios -c "/usr/bin/rackup  -I /usr/lib/sinagios -r sinagios -p 4567 -E production -D -P $PIDFILE -s thin /etc/sinagios/config.ru"
-    RC=$?
-    [ $RC -eq 0 ] && success || failure
+    start-stop-daemon -u sinagios --start  --exec /usr/bin/rackup -- -I /usr/lib/sinagios -r sinagios -p 4567 -E production -D -P $PIDFILE -s thin /etc/sinagios/config.ru
 }
 
 stop() {
     # rackup stupidly only exits gracefully on SIGINT
-    killproc -p $PIDFILE rackup -INT
-    RC=$?
-    rm -f $PIDFILE
-    [ $RC -eq 0 ] && success || failure
+    start-stop-daemon --stop --quiet --oknodo --pidfile $PIDFILE
 }
 
 case "$1" in
@@ -51,5 +44,3 @@ case "$1" in
     echo "Usage: $0 {start|stop|restart|condrestart|reload|force-reload|status}"
     ;;
 esac
-
-exit $RC

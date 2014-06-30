@@ -55,7 +55,7 @@ task :package, :type do |t, args|
     if  PKGTYPE == 'rpm'
       PKGDEPENDS =  ['ruby', 'nagios', 'rubygem-rack', 'rubygem-json', 'rubygem-thin', 'rubygem-sinatra']
     elsif PKGTYPE == 'deb'
-      PKGDEPENDS =  ['ruby', 'nagios', 'ruby-rack', 'ruby-json', 'thin', 'ruby-sinatra']
+      PKGDEPENDS =  ['ruby', 'ruby-rack', 'ruby-json', 'thin', 'ruby-sinatra']
     end
     PKGSOURCE = 'dir'
     PKGPRESCRIPT = "#{PKGTYPE}files/sinagios.preinstall"
@@ -73,13 +73,13 @@ task :package, :type do |t, args|
     FileUtils.mkdir_p("#{dir}/usr/lib/sinagios/")
     FileUtils.mkdir_p("#{dir}/etc/sinagios/")
     FileUtils.mkdir_p("#{dir}/etc/logrotate.d/")
-    FileUtils.mkdir_p("#{dir}/etc/rc.d/init.d/")
+    FileUtils.mkdir_p("#{dir}/etc/init.d/")
     FileUtils.mkdir_p("#{dir}/var/log/sinagios/")
     FileUtils.cp_r(['sinagios.rb', 'lib'], "#{dir}/usr/lib/sinagios/")
     FileUtils.cp_r(["#{PKGTYPE}files/config.ru", "#{PKGTYPE}files/sinagios.conf"], "#{dir}/etc/sinagios/")
     FileUtils.cp_r("#{PKGTYPE}files/sinagios.logrotate", "#{dir}/etc/logrotate.d/sinagios")
-    FileUtils.cp_r("#{PKGTYPE}files/sinagios.init", "#{dir}/etc/rc.d/init.d/sinagios")
-    FileUtils.chmod(0555, "#{dir}/etc/rc.d/init.d/sinagios")
+    FileUtils.cp_r("#{PKGTYPE}files/sinagios.init", "#{dir}/etc/init.d/sinagios")
+    FileUtils.chmod(0555, "#{dir}/etc/init.d/sinagios")
 
     # Actually create the package now
     sh "fpm -s #{PKGSOURCE} -t #{PKGTYPE} -n #{PKGNAME} -v #{PKGVERSION} #{PKGDEPENDS.map { |p| '-d '+p }.join(' ')} -a #{PKGARCH} -m #{PKGMAINT} -C #{dir} --pre-install #{PKGPRESCRIPT} --post-install #{PKGPOSTSCRIPT} #{PKGCONFIGS.map { |c| '--config-files '+c }.join(' ')} ./"
