@@ -1,3 +1,0 @@
-rvm use ruby-1.8.6
-rvm gemset use sinagios
-alias rake='bundle exec rake'
